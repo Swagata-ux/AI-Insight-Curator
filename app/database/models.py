@@ -55,3 +55,30 @@ class Digest(Base):
     summary = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+
+class GitHubRepo(Base):
+    __tablename__ = "github_repos"
+    
+    repo_name = Column(String, primary_key=True)
+    url = Column(String, nullable=False)
+    description = Column(Text)
+    stars = Column(String)
+    language = Column(String)
+    stars_today = Column(String)
+    scraped_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class AIJob(Base):
+    __tablename__ = "ai_jobs"
+    
+    job_id = Column(String, primary_key=True)
+    title = Column(String, nullable=False)
+    company = Column(String, nullable=False)
+    location = Column(String)
+    url = Column(String, nullable=False)
+    description = Column(Text)
+    posted_at = Column(DateTime, nullable=False)
+    job_type = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow)
+

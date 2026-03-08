@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
-from .models import YouTubeVideo, OpenAIArticle, AnthropicArticle, Digest
+from .models import YouTubeVideo, OpenAIArticle, AnthropicArticle, Digest, GitHubRepo, AIJob
 from .connection import get_session
 
 
@@ -244,5 +244,83 @@ class Repository:
                 "created_at": d.created_at
             }
             for d in digests
+        ]
+    
+    def bulk_create_github_repos(self, repos: List[dict]) -> int:
+        new_repos = []
+        for r in repos:
+            existing = self.session.query(GitHubRepo).filter_by(repo_name=r["repo_name"]).first()
+            if not existing:
+                new_repos.append(GitHubRepo(
+                    repo_name=r["repo_name"],
+                    url=r["url"],
+                    description=r.get("description", ""),
+                    stars=r.get("stars", "0"),
+                    language=r.get("language", "Unknown"),
+                    stars_today=r.get("stars_today", "0"),
+                    scraped_at=r["scraped_at"]
+                ))
+        if new_repos:
+            self.session.add_all(new_repos)
+            self.session.commit()
+        return len(new_repos)
+    
+    def bulk_create_ai_jobs(self, jobs: List[dict]) -> int:
+        new_jobs = []
+        for j in jobs:
+            existing = self.session.query(AIJob).filter_by(job_id=j["job_id"]).first()
+            if not existing:
+                new_jobs.append(AIJob(
+                    job_id=j["job_id"],
+                    title=j["title"],
+                    company=j["company"],
+                    location=j.get("location", "Remote"),
+                    url=j["url"],
+                    description=j.get("description", ""),
+                    posted_at=j["posted_at"],
+                    job_type=j.get("job_type", "Full-time")
+                ))
+        if new_jobs:
+            self.session.add_all(new_jobs)
+            self.session.commit()
+        return len(new_jobs)
+    
+    def get_recent_github_repos(self, hours: int = 24) -> List[Dict[str, Any]]:
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
+        repos = self.session.query(GitHubRepo).filter(
+            GitHubRepo.scraped_at >= cutoff_time
+        ).order_by(GitHubRepo.scraped_at.desc()).all()
+        
+        return [
+            {
+                "repo_name": r.repo_name,
+                "url": r.url,
+                "description": r.description,
+                "stars": r.stars,
+                "language": r.language,
+                "stars_today": r.stars_today,
+                "scraped_at": r.scraped_at
+            }
+            for r in repos
+        ]
+    
+    def get_recent_ai_jobs(self, hours: int = 168) -> List[Dict[str, Any]]:
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
+        jobs = self.session.query(AIJob).filter(
+            AIJob.posted_at >= cutoff_time
+        ).order_by(AIJob.posted_at.desc()).all()
+        
+        return [
+            {
+                "job_id": j.job_id,
+                "title": j.title,
+                "company": j.company,
+                "location": j.location,
+                "url": j.url,
+                "description": j.description,
+                "posted_at": j.posted_at,
+                "job_type": j.job_type
+            }
+            for j in jobs
         ]
 

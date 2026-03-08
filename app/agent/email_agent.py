@@ -29,6 +29,8 @@ class EmailDigestResponse(BaseModel):
     articles: List[RankedArticleDetail]
     total_ranked: int
     top_n: int
+    github_repos: List[dict] = []
+    ai_jobs: List[dict] = []
     
     def to_markdown(self) -> str:
         markdown = f"{self.introduction.greeting}\n\n"
@@ -40,6 +42,21 @@ class EmailDigestResponse(BaseModel):
             markdown += f"{article.summary}\n\n"
             markdown += f"[Read more →]({article.url})\n\n"
             markdown += "---\n\n"
+        
+        if self.github_repos:
+            markdown += "\n## 🔥 Trending AI Repos on GitHub\n\n"
+            for repo in self.github_repos:
+                markdown += f"**{repo['repo_name']}** ({repo['language']})\n"
+                markdown += f"{repo['description']}\n"
+                markdown += f"⭐ {repo['stars']} | 🌟 {repo['stars_today']} today\n"
+                markdown += f"[View on GitHub]({repo['url']})\n\n"
+        
+        if self.ai_jobs:
+            markdown += "\n## 💼 Latest AI Job Opportunities\n\n"
+            for job in self.ai_jobs:
+                markdown += f"**{job['title']}** at {job['company']}\n"
+                markdown += f"📍 {job['location']} | {job['job_type']}\n"
+                markdown += f"[Apply now]({job['url']})\n\n"
         
         return markdown
 

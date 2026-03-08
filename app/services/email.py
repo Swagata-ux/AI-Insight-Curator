@@ -146,6 +146,25 @@ def digest_to_html(digest_response) -> str:
         html_parts.append(f'<p><a href="{html.escape(article.url)}" class="article-link">Read more →</a></p>')
         html_parts.append('<hr>')
     
+    if digest_response.github_repos:
+        html_parts.append('<h2 style="font-size: 18px; margin-top: 30px;">🔥 Trending AI Repos on GitHub</h2>')
+        for repo in digest_response.github_repos:
+            html_parts.append(f'<div style="margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">')
+            html_parts.append(f'<strong>{html.escape(repo["repo_name"])}</strong> <span style="color: #666;">({html.escape(repo["language"])})</span><br>')
+            html_parts.append(f'{html.escape(repo["description"])}<br>')
+            html_parts.append(f'<span style="color: #666;">⭐ {html.escape(repo["stars"])} | 🌟 {html.escape(repo["stars_today"])} today</span><br>')
+            html_parts.append(f'<a href="{html.escape(repo["url"])}">View on GitHub</a>')
+            html_parts.append('</div>')
+    
+    if digest_response.ai_jobs:
+        html_parts.append('<h2 style="font-size: 18px; margin-top: 30px;">💼 Latest AI Job Opportunities</h2>')
+        for job in digest_response.ai_jobs:
+            html_parts.append(f'<div style="margin: 15px 0; padding: 10px; background: #f0f7ff; border-radius: 5px;">')
+            html_parts.append(f'<strong>{html.escape(job["title"])}</strong> at {html.escape(job["company"])}<br>')
+            html_parts.append(f'<span style="color: #666;">📍 {html.escape(job["location"])} | {html.escape(job["job_type"])}</span><br>')
+            html_parts.append(f'<a href="{html.escape(job["url"])}">Apply now</a>')
+            html_parts.append('</div>')
+    
     html_content = '\n'.join(html_parts)
     
     return f"""<!DOCTYPE html>

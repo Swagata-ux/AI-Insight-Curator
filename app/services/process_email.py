@@ -8,6 +8,7 @@ from app.agent.curator_agent import CuratorAgent
 from app.profiles.user_profile import USER_PROFILE
 from app.database.repository import Repository
 from app.services.email import send_email, digest_to_html
+from app.services.slack_notification import send_slack_notification
 
 logging.basicConfig(
     level=logging.INFO,
@@ -23,6 +24,8 @@ def generate_email_digest(hours: int = 24, top_n: int = 10) -> EmailDigestRespon
     repo = Repository()
     
     digests = repo.get_recent_digests(hours=hours)
+    github_repos = repo.get_recent_github_repos(hours=hours)
+    ai_jobs = repo.get_recent_ai_jobs(hours=168)
     total = len(digests)
     
     if total == 0:
@@ -58,6 +61,9 @@ def generate_email_digest(hours: int = 24, top_n: int = 10) -> EmailDigestRespon
         limit=top_n
     )
     
+    email_digest.github_repos = github_repos[:5]
+    email_digest.ai_jobs = ai_jobs[:5]
+    
     logger.info("Email digest generated successfully")
     logger.info(f"\n=== Email Introduction ===")
     logger.info(email_digest.introduction.greeting)
@@ -81,10 +87,17 @@ def send_digest_email(hours: int = 24, top_n: int = 10) -> dict:
         )
         
         logger.info("Email sent successfully!")
+        
+        # Send Slack notification
+        slack_sent = send_slack_notification(result)
+        if slack_sent:
+            logger.info("Slack notification sent successfully!")
+        
         return {
             "success": True,
             "subject": subject,
-            "articles_count": len(result.articles)
+            "articles_count": len(result.articles),
+            "slack_sent": slack_sent
         }
     except ValueError as e:
         logger.error(f"Error sending email: {e}")
